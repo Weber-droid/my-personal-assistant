@@ -1,3 +1,4 @@
+import sys
 import datetime
 import dateparser
 import os
@@ -9,6 +10,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 from dotenv import load_dotenv
+from rich.prompt import Confirm 
 
 load_dotenv()
 
@@ -19,7 +21,6 @@ console = Console()
 SCOPES = ['https://www.googleapis.com/auth/calendar'] 
 
 def load_contacts():
-    # Construct the path relative to the script location
     script_dir = os.path.dirname(os.path.abspath(__file__))
     contacts_path = os.path.join(script_dir, 'contacts.json')
     with open(contacts_path, 'r') as f:
@@ -90,12 +91,50 @@ def ask_ai(user_input):
     
     return json.loads(chat_completion.choices[0].message.content)
 
+# def add_intelligent_event(user_input):
+#     service = get_calendar_service()
+    
+#     with console.status("[bold cyan]Groq is thinking (Lightning Fast)...") as status:
+#         data = ask_ai(user_input)
+    
+#     attendees = [{"email": CONTACTS[name]} for name in data.get('guests', []) if name in CONTACTS]
+
+#     event_body = {
+#         'summary': data['summary'],
+#         'start': {'dateTime': data['time'], 'timeZone': 'UTC'},
+#         'end': {'dateTime': (dateparser.parse(data['time']) + datetime.timedelta(hours=1)).isoformat(), 'timeZone': 'UTC'},
+#         'attendees': attendees,
+#     }
+
+#     event = service.events().insert(calendarId='primary', body=event_body, sendUpdates='all').execute()
+#     console.print(Panel(f" [bold green]Event Added![/bold green]\n[white]{data['summary']} at {data['time']}[/white]", border_style="green"))
+
+#     event_link = event.get('htmlLink')
+#     console.print(Panel(
+#         f"[bold green]Event Created![/bold green]\n"
+#         f"[bold]Link:[/bold] [link={event_link}]{event_link}[/link]\n"
+#         f"[dim]Invited: {', '.join(data.get('guests', ['No one']))}[/dim]", 
+#         border_style="green"
+#     ))
+
 def add_intelligent_event(user_input):
     service = get_calendar_service()
     
-    with console.status("[bold cyan]Groq is thinking (Lightning Fast)...") as status:
+    with console.status("[bold cyan]Groq is thinking...") as status:
         data = ask_ai(user_input)
     
+    console.print(Panel(
+        f"[bold cyan]Proposed Event:[/bold cyan]\n"
+        f"Task: {data['summary']}\n"
+        f"Time: {data['time']}\n"
+        f"Guests: {', '.join(data.get('guests', ['None']))}",
+        title="AI Interpretation"
+    ))
+
+    if not Confirm.ask("Does this look correct?"):
+        console.print("[yellow]Skipping. No event added.[/yellow]")
+        return
+
     attendees = [{"email": CONTACTS[name]} for name in data.get('guests', []) if name in CONTACTS]
 
     event_body = {
@@ -106,7 +145,7 @@ def add_intelligent_event(user_input):
     }
 
     event = service.events().insert(calendarId='primary', body=event_body, sendUpdates='all').execute()
-    console.print(Panel(f" [bold green]Event Added![/bold green]\n[white]{data['summary']} at {data['time']}[/white]", border_style="green"))
+    console.print(f"[bold green]✔ Success![/bold green] Event added to your calendar.")
 
     event_link = event.get('htmlLink')
     console.print(Panel(
@@ -115,6 +154,7 @@ def add_intelligent_event(user_input):
         f"[dim]Invited: {', '.join(data.get('guests', ['No one']))}[/dim]", 
         border_style="green"
     ))
+
 
 if __name__ == "__main__":
     console.print(Panel.fit("⚡ [bold cyan]Groq-Powered AI Assistant[/bold cyan] ⚡", subtitle="v2.0"))
