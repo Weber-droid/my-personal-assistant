@@ -1,5 +1,12 @@
 {
-    "Emmanuel": "emmanueltotimeh2002@gmail.com",
-    "Michelle": "michelleopara143@gmail.com",
-    "Bro": "danieltotimeh63@gmail.com"
+    "individuals": {
+        "Emmanuel": "emmanueltotimeh2002@gmail.com",
+        "Michelle": "michelleopara143@gmail.com"
+    },
+    "groups": {
+        "engineering team": [
+            "emmanuel.totimeh@kofa.co",
+            "emmanueltotimeh2002@gmail.com"
+        ]
+    }
 }
